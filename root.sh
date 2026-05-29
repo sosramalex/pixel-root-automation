@@ -81,6 +81,21 @@ preflight() {
     exit 1
   fi
 
+  # Check / install system dependencies
+  local deps="curl unzip python3 pip3"
+  for dep in $deps; do
+    if ! command -v "$dep" &>/dev/null; then
+      log "Installing missing dependency: $dep"
+      apt-get install -y -qq "$dep" 2>/dev/null || true
+    fi
+  done
+
+  # Ensure pexpect is installed for USB permission fix
+  if ! python3 -c "import pexpect" 2>/dev/null; then
+    log "Installing python3-pexpect..."
+    apt-get install -y -qq python3-pexpect 2>/dev/null || pip3 install pexpect 2>/dev/null || true
+  fi
+
   # Download platform-tools if missing
   if [ ! -f "${ADB}" ]; then
     log "Downloading platform-tools..."
