@@ -2,8 +2,10 @@
 set -euo pipefail
 
 # ─── Pixel 9 Pro (caiman) — Android 16 — Automated Root ──────────────────────
-# Usage: sudo ./root.sh
-# Prerequisites: adb, fastboot, python3 with pexpect, unlocked bootloader
+# Usage:
+#   Remote:  curl -sL https://raw.githubusercontent.com/alsosram/pixel-root-automation/main/root.sh | sudo bash
+#   Local:   sudo ./root.sh
+# Prerequisites: python3 with pexpect (pip install pexpect), unlocked bootloader
 # ──────────────────────────────────────────────────────────────────────────────
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
@@ -26,7 +28,7 @@ ADB="${PLATFORM_TOOLS}/adb"
 FASTBOOT="${PLATFORM_TOOLS}/fastboot"
 SUDO_PASS="${SUDO_PASS:-Op3nC0d3}"
 WORKDIR="/tmp/pixel-root"
-MODDIR="$(dirname "$0")/modules"
+MODDIR="${MODDIR:-/tmp/pixel-root/modules}"
 
 mkdir -p "$WORKDIR" "$MODDIR"
 
@@ -382,10 +384,21 @@ menu() {
 }
 
 # ─── Main ────────────────────────────────────────────────────────────────────
+
+# Detect if running via curl pipe
+if [ -z "${BASH_SOURCE:-}" ] || [ "$0" = "bash" ] || [ "$0" = "sh" ]; then
+  CURL_MODE=1
+  echo -e "${CYAN}Running remotely via curl | bash${NC}"
+  echo -e "${CYAN}Repo: https://github.com/alsosram/pixel-root-automation${NC}\n"
+else
+  CURL_MODE=0
+fi
+
 if [ $# -ge 1 ]; then
   # CLI mode: pass step names as args
   for step in "$@"; do
     case "$step" in
+      -h|--help|help) echo "Steps: preflight, download, extract, magisk, flash, verify, pif, cleardata, fixusb"; exit 0;;
       preflight) preflight ;;
       download) download_factory ;;
       extract) extract_init_boot ;;

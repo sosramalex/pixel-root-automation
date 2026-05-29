@@ -9,7 +9,23 @@ Automated root script for **Pixel 9 Pro (caiman)** on **Android 16 (CP1A.260505.
 - USB cable
 - Python 3 with `pexpect` installed (`pip install pexpect`)
 
-## Usage
+## One-liner (remote run)
+
+```bash
+curl -sL https://raw.githubusercontent.com/alsosram/pixel-root-automation/main/root.sh | sudo bash
+```
+
+Starts the interactive menu. Run individual steps via arguments:
+
+```bash
+# Fix USB permissions only
+curl -sL https://raw.githubusercontent.com/alsosram/pixel-root-automation/main/root.sh | sudo bash -s fixusb
+
+# Full auto root (non-interactive steps)
+curl -sL https://raw.githubusercontent.com/alsosram/pixel-root-automation/main/root.sh | sudo bash -s preflight download extract magisk flash verify pif cleardata
+```
+
+## Local usage (clone first)
 
 ```bash
 chmod +x root.sh
