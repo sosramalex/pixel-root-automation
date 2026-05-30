@@ -3,7 +3,7 @@ set -euo pipefail
 
 # ─── Pixel 9 Pro (caiman) — Android 16 — Automated Root ──────────────────────
 # Usage:
-#   Remote:  curl -sL https://raw.githubusercontent.com/alsosram/pixel-root-automation/main/root.sh | sudo bash
+#   Remote:  curl -sL https://raw.githubusercontent.com/sosramalex/pixel-root-automation/main/root.sh | sudo bash
 #   Local:   sudo ./root.sh
 # Prerequisites: python3 with pexpect (pip install pexpect), unlocked bootloader
 # ──────────────────────────────────────────────────────────────────────────────
@@ -404,7 +404,7 @@ menu() {
 if [ -z "${BASH_SOURCE:-}" ] || [ "$0" = "bash" ] || [ "$0" = "sh" ]; then
   CURL_MODE=1
   echo -e "${CYAN}Running remotely via curl | bash${NC}"
-  echo -e "${CYAN}Repo: https://github.com/alsosram/pixel-root-automation${NC}\n"
+  echo -e "${CYAN}Repo: https://github.com/sosramalex/pixel-root-automation${NC}\n"
 else
   CURL_MODE=0
 fi
