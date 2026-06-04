@@ -1,4 +1,4 @@
-# Pixel Root Automation
+# Pixel 9 Pro Root Automation
 
 Automated root script for **Pixel 9 Pro (caiman)** on **Android 16 (CP1A.260505.005)** using **Magisk v30.7** + **PlayIntegrityFork v16**.
 
