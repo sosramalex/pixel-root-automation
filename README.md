@@ -1,7 +1,7 @@
 [![GitHub](https://img.shields.io/badge/GitHub-sosaramosalexis/pixel-root-automation-181717?logo=github)](https://github.com/sosaramosalexis/pixel-root-automation)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Shell](https://img.shields.io/badge/shell-blue?logo=gnu-bash)]()
-[![Platform](https://img.shields.io/badge/platform-Linux-blue)]()
+[![Platform](https://img.shields.io/badge/platform-Android-green)]()
 
 # Pixel 9 Pro Root Automation
 
