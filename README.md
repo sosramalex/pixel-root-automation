@@ -16,17 +16,17 @@ Automated root script for **Pixel 9 Pro (caiman)** on **Android 16 (CP1A.260505.
 ## One-liner (remote run)
 
 ```bash
-curl -sL https://raw.githubusercontent.com/sosramalex/pixel-root-automation/main/root.sh | sudo bash
+curl -sL https://raw.githubusercontent.com/sosaramosalexis/pixel-root-automation/main/root.sh | sudo bash
 ```
 
 Starts the interactive menu. Run individual steps via arguments:
 
 ```bash
 # Fix USB permissions only
-curl -sL https://raw.githubusercontent.com/sosramalex/pixel-root-automation/main/root.sh | sudo bash -s fixusb
+curl -sL https://raw.githubusercontent.com/sosaramosalexis/pixel-root-automation/main/root.sh | sudo bash -s fixusb
 
 # Full auto root (non-interactive steps)
-curl -sL https://raw.githubusercontent.com/sosramalex/pixel-root-automation/main/root.sh | sudo bash -s preflight download extract magisk flash verify pif cleardata
+curl -sL https://raw.githubusercontent.com/sosaramosalexis/pixel-root-automation/main/root.sh | sudo bash -s preflight download extract magisk flash verify pif cleardata
 ```
 
 ## Local usage (clone first)
