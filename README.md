@@ -3,7 +3,7 @@
   <!-- Replace src with your 784×1168 logo image (displayed at 90px wide) -->
 </p>
 
-[![GitHub](https://img.shields.io/badge/GitHub-sosaramosalexis/pixel-root-automation-181717?logo=github)](https://github.com/sosaramosalexis/pixel-root-automation)
+[![GitHub](https://img.shields.io/static/v1?label=GitHub&message=sosaramosalexis%2Fpixel-root-automation&color=181717&logo=github)](https://github.com/sosaramosalexis/pixel-root-automation)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Shell](https://img.shields.io/badge/shell-blue?logo=gnu-bash)]()
 [![Platform](https://img.shields.io/badge/platform-Android-green)]()
