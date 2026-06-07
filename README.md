@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://img.shields.io/badge/shell-blue?logo=bash&style=flat-square" alt="Shell">
+</p>
+
 # Pixel 9 Pro Root Automation
 
 Automated root script for **Pixel 9 Pro (caiman)** on **Android 16 (CP1A.260505.005)** using **Magisk v30.7** + **PlayIntegrityFork v16**.
