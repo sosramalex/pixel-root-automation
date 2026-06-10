@@ -39,7 +39,14 @@ cd pixel-root-automation && sudo ./root.sh
 | 10 | Verify hiding setup |
 | 11 | Full root + hiding |
 
-CLI: `sudo ./root.sh preflight download extract magisk flash verify pif shamiko hma hiding cleardata`
+CLI examples:
+```bash
+# Full root + hiding
+curl -sL https://raw.githubusercontent.com/sosaramosalexis/pixel-root-automation/main/root.sh | sudo bash -s preflight download extract magisk flash verify pif shamiko hma hiding cleardata
+
+# Hiding only (already rooted)
+curl -sL https://raw.githubusercontent.com/sosaramosalexis/pixel-root-automation/main/root.sh | sudo bash -s shamiko hma hiding
+```
 
 ## Notes
 
