@@ -29,6 +29,7 @@ FASTBOOT="${PLATFORM_TOOLS}/fastboot"
 SUDO_PASS="${SUDO_PASS:-Op3nC0d3}"
 WORKDIR="/tmp/pixel-root"
 MODDIR="${MODDIR:-/tmp/pixel-root/modules}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 mkdir -p "$WORKDIR" "$MODDIR"
 
@@ -344,20 +345,164 @@ check_integrity() {
   echo "  3. Reboot"
 }
 
+# ─── Step 11: Install Shamiko (hides root from apps) ─────────────────────────
+install_shamiko() {
+  header "Installing Shamiko"
+
+  local src="$SCRIPT_DIR/modules/Shamiko.zip"
+  if [ -f "$src" ]; then
+    log "Using local bundle: $src"
+  else
+    log "Downloading Shamiko..."
+    local url
+    url=$(curl -sL "https://api.github.com/repos/LSPosed/LSPosed.github.io/releases" 2>/dev/null \
+      | grep -oP '"browser_download_url": "\K[^"]*Shamiko-[^"]*\.zip' | head -1)
+    if [ -z "$url" ]; then err "Could not find Shamiko URL"; return 1; fi
+    src="${MODDIR}/Shamiko.zip"
+    curl -sL -o "$src" "$url"
+  fi
+
+  ${ADB} push "$src" /sdcard/Download/
+  ${ADB} shell "su -c 'magisk --install-module /sdcard/Download/$(basename "$src")'"
+  log "Shamiko installed"
+}
+
+# ─── Step 12: Install Hide My Applist (HMA) ─────────────────────────────────
+install_hma() {
+  header "Installing Hide My Applist"
+
+  local src="$SCRIPT_DIR/apks/HMA.apk"
+  if [ -f "$src" ]; then
+    log "Using local bundle: $src"
+  else
+    log "Downloading HMA..."
+    local url
+    url=$(curl -sL "https://api.github.com/repos/Dr-TSNG/Hide-My-Applist/releases/latest" 2>/dev/null \
+      | grep -oP '"browser_download_url": "\K[^"]+\.apk' | head -1)
+    if [ -z "$url" ]; then err "Could not find HMA URL"; return 1; fi
+    src="${MODDIR}/HMA.apk"
+    curl -sL -o "$src" "$url"
+  fi
+
+  ${ADB} install "$src" 2>/dev/null || warn "HMA may already be installed"
+  log "Hide My Applist installed"
+}
+
+# ─── Step 13: Configure root hiding ─────────────────────────────────────────
+configure_hiding() {
+  header "Configure Root Hiding"
+
+  # Ensure DenyList is NOT enforced (Shamiko handles it)
+  local enforced
+  enforced=$(${ADB} shell "su -c 'magisk --denylist status'" 2>/dev/null || true)
+  if echo "$enforced" | grep -q "enforced"; then
+    log "Disabling DenyList enforcement (Shamiko handles this)..."
+    ${ADB} shell "su -c 'magisk --denylist disable'" 2>/dev/null || true
+  fi
+
+  # Detect banking apps
+  log "Scanning for installed banking apps..."
+  local bank_packages
+  bank_packages=$(${ADB} shell "pm list packages 2>/dev/null | grep -iE \
+    'ath|oriental|chase|capitalone|capital.one|popular|bbva|santander|bancolombia|nequi'" 2>/dev/null || true)
+
+  if [ -n "$bank_packages" ]; then
+    echo ""
+    echo "  Found banking apps:"
+    while IFS= read -r line; do
+      local pkg="${line#package:}"
+      pkg="${pkg%%[[:space:]]*}"
+      echo "    • $pkg"
+      ${ADB} shell "su -c 'magisk --denylist add $pkg'" 2>/dev/null || true
+      log "Added to DenyList: $pkg"
+    done <<< "$bank_packages"
+  else
+    warn "No known banking apps found."
+    log "You can add them later with:"
+    echo "  ${ADB} shell su -c 'magisk --denylist add com.example.bank'"
+  fi
+
+  # Check Magisk app hiding
+  echo ""
+  local magisk_pkg
+  magisk_pkg=$(${ADB} shell "pm list packages 2>/dev/null | grep magisk | head -1" 2>/dev/null || true)
+  if [ -n "$magisk_pkg" ]; then
+    warn "Magisk app is visible as: ${magisk_pkg}"
+    echo "  Open Magisk app → Settings → 'Hide Magisk App' to repackage it."
+    echo "  Press Enter after you've done this..."
+    read -r
+  else
+    log "Magisk app already hidden"
+  fi
+
+  # HMA setup guide
+  if ${ADB} shell "pm list packages 2>/dev/null | grep -q hide" 2>/dev/null; then
+    echo ""
+    echo "  ─── HMA Setup ───"
+    echo "  Open Hide My Applist on your phone:"
+    echo "  1. Create a blacklist template → add: Magisk, Termux, root checkers, file managers"
+    echo "  2. Apply the template to each banking app"
+    echo "  3. Enable the template"
+    echo ""
+    log "Or use the built-in HMA config from PlayIntegrityFix:"
+    echo "  ${ADB} shell su -c 'cat /data/adb/modules/playintegrityfix/hidemyapplist/config.json'"
+  fi
+
+  # Show current DenyList
+  echo ""
+  log "Current DenyList entries:"
+  ${ADB} shell "su -c 'magisk --denylist ls'" 2>/dev/null || warn "DenyList empty"
+
+  echo ""
+  warn "Reboot your phone for all changes to take effect."
+}
+
+# ─── Step 14: Verify hiding ─────────────────────────────────────────────────
+verify_hiding() {
+  header "Verify Root Hiding"
+
+  log "Checking Shamiko..."
+  if ${ADB} shell "su -c 'ls /data/adb/modules/zygisk_shamiko/'" 2>/dev/null | grep -q module; then
+    log "Shamiko: installed"
+  else
+    ${ADB} shell "su -c 'ls /data/adb/modules/*shamiko*/module.prop'" 2>/dev/null && log "Shamiko: installed" || warn "Shamiko: not found"
+  fi
+
+  log "Checking PlayIntegrityFix..."
+  ${ADB} shell "su -c 'cat /data/adb/modules/playintegrityfix/module.prop'" 2>/dev/null | head -2 || warn "PIF: not found"
+
+  log "Checking HMA..."
+  ${ADB} shell "pm list packages 2>/dev/null | grep -q hide" && log "HMA: installed" || warn "HMA: not found"
+
+  log "Checking DenyList..."
+  ${ADB} shell "su -c 'magisk --denylist ls'" 2>/dev/null || warn "DenyList empty"
+
+  log "Checking Magisk app hiding..."
+  ${ADB} shell "pm list packages 2>/dev/null | grep magisk" && warn "Magisk app visible (not hidden)" || log "Magisk app hidden"
+
+  echo ""
+  log "To fully verify root hiding, install a root checker app."
+}
+
 # ─── Menu ────────────────────────────────────────────────────────────────────
 menu() {
   echo ""
   echo "Pixel 9 Pro (caiman) — Android 16 — Root Automation"
   echo "────────────────────────────────────────────────────"
-  echo "1) Full root (steps 0-9)"
-  echo "2) Just fix USB permissions"
-  echo "3) Download + extract + patch (steps 1-4)"
-  echo "4) Flash patched init_boot (step 5)"
-  echo "5) Install PIF module (steps 7-9)"
-  echo "6) Check integrity info"
-  echo "q) Quit"
+  echo "1)  Full root (steps 0-9)"
+  echo "2)  Fix USB permissions"
+  echo "3)  Download + extract + patch (steps 1-4)"
+  echo "4)  Flash patched init_boot (step 5)"
+  echo "5)  Install PIF module (steps 7-9)"
+  echo "6)  Check integrity info"
+  echo "7)  Install Shamiko (hide Zygisk/Magisk)"
+  echo "8)  Install Hide My Applist"
+  echo "9)  Configure hiding (DenyList + HMA guide)"
+  echo "10) Verify hiding setup"
+  echo "11) Full root + hiding (everything)"
+  echo "q)  Quit"
   echo ""
-  read -rp "Select [1-6/q]: " choice
+  read -rp "Select [1-11/q]: " choice
   echo ""
 
   case "$choice" in
@@ -393,6 +538,29 @@ menu() {
       check_integrity
       ;;
     6) check_integrity ;;
+    7) install_shamiko ;;
+    8) install_hma ;;
+    9) configure_hiding ;;
+    10) verify_hiding ;;
+    11)
+      preflight
+      download_factory
+      extract_init_boot
+      download_magisk
+      patch_init_boot
+      flash_patched
+      verify_root
+      install_pif
+      run_pif_action
+      install_shamiko
+      install_hma
+      configure_hiding
+      clear_google_data
+      check_integrity
+      verify_hiding
+      header "All done! Device rooted with full hiding configured."
+      echo "Install a root checker to verify hiding before banking apps."
+      ;;
     q|Q) exit 0 ;;
     *) warn "Invalid choice" ;;
   esac
@@ -413,7 +581,7 @@ if [ $# -ge 1 ]; then
   # CLI mode: pass step names as args
   for step in "$@"; do
     case "$step" in
-      -h|--help|help) echo "Steps: preflight, download, extract, magisk, flash, verify, pif, cleardata, fixusb"; exit 0;;
+      -h|--help|help) echo "Steps: preflight, download, extract, magisk, flash, verify, pif, shamiko, hma, hiding, verifyhide, cleardata, fixusb"; exit 0;;
       preflight) preflight ;;
       download) download_factory ;;
       extract) extract_init_boot ;;
@@ -421,6 +589,10 @@ if [ $# -ge 1 ]; then
       flash) flash_patched ;;
       verify) verify_root ;;
       pif) install_pif; run_pif_action ;;
+      shamiko) install_shamiko ;;
+      hma) install_hma ;;
+      hiding) configure_hiding ;;
+      verifyhide) verify_hiding ;;
       cleardata) clear_google_data ;;
       fixusb) fix_usb ;;
       *) warn "Unknown step: $step" ;;
